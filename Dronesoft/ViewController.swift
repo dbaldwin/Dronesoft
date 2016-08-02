@@ -9,7 +9,7 @@
 import UIKit
 import GoogleMaps
 
-class ViewController: UIViewController, GMSMapViewDelegate {
+class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate {
     
     var markers = [Int: GMSMarker]()
     
@@ -17,6 +17,7 @@ class ViewController: UIViewController, GMSMapViewDelegate {
 
     @IBOutlet weak var mapView: GMSMapView!
     
+    @IBOutlet weak var addressField: UITextField!
     
     
     override func viewDidLoad() {
@@ -30,7 +31,9 @@ class ViewController: UIViewController, GMSMapViewDelegate {
         mapView.myLocationEnabled = true
         mapView.settings.myLocationButton = true
         mapView.delegate = self
-
+        
+        // Set the address field delegate
+        addressField.delegate = self
 
     }
 
@@ -106,11 +109,53 @@ class ViewController: UIViewController, GMSMapViewDelegate {
         polygon.map = mapView
         
     }
+    
+    // MARK: UITextFieldDelegate
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        addressField.resignFirstResponder()
+        
+        // Forward geocode the address and recenter the map
+        CLGeocoder().geocodeAddressString(addressField.text!, completionHandler: { (placemarks, error) in
+            if error != nil {
+                print(error)
+                return
+            }
+            if placemarks?.count > 0 {
+                let placemark = placemarks?[0]
+                let location = placemark?.location
+                let coordinate = location?.coordinate
+                
+                self.mapView.animateToLocation(coordinate!)
+                
+            }
+        })
+        
+        return true
+    }
 
     // Clear the map
     @IBAction func clearMap(sender: AnyObject) {
         mapView.clear()
         markers = [:]
+    }
+    
+    
+    
+    // Forward geocoding for a user to enter a city, zip, street and center the map
+    func forwardGeocoding(address: String) {
+        CLGeocoder().geocodeAddressString(address, completionHandler: { (placemarks, error) in
+            if error != nil {
+                print(error)
+                return
+            }
+            if placemarks?.count > 0 {
+                let placemark = placemarks?[0]
+                let location = placemark?.location
+                let coordinate = location?.coordinate
+                print("\nlat: \(coordinate!.latitude), long: \(coordinate!.longitude)")
+            }
+        })
     }
 }
 

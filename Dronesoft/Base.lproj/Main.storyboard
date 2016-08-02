@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -21,6 +22,16 @@
                                 <rect key="frame" x="0.0" y="0.0" width="1024" height="768"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="line" placeholder="Search by zip, city, or address" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="CDZ-bN-Bvf">
+                                <rect key="frame" x="30" y="30" width="341" height="40"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="40" id="HOG-JH-Xef"/>
+                                    <constraint firstAttribute="width" constant="341" id="w8a-zn-Os8"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                <textInputTraits key="textInputTraits" returnKeyType="search"/>
+                            </textField>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AKc-oP-7gE">
                                 <rect key="frame" x="438" y="698" width="147" height="30"/>
                                 <color key="backgroundColor" red="0.0" green="0.54004506885593795" blue="1" alpha="1" colorSpace="calibratedRGB"/>
@@ -39,6 +50,8 @@
                         <constraints>
                             <constraint firstAttribute="trailing" secondItem="82A-jC-Jak" secondAttribute="trailing" id="41t-dY-Uus"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="82A-jC-Jak" secondAttribute="bottom" id="BpI-7o-bIX"/>
+                            <constraint firstItem="CDZ-bN-Bvf" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="10" id="HC1-ax-fDQ"/>
+                            <constraint firstItem="CDZ-bN-Bvf" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="10" id="TW9-cH-0Xc"/>
                             <constraint firstItem="AKc-oP-7gE" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="URg-op-SUv"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="AKc-oP-7gE" secondAttribute="bottom" constant="40" id="fh9-Mf-sUn"/>
                             <constraint firstItem="82A-jC-Jak" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="kgl-E1-Hfb"/>
@@ -48,6 +61,7 @@
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     <simulatedScreenMetrics key="simulatedDestinationMetrics" type="iPad"/>
                     <connections>
+                        <outlet property="addressField" destination="CDZ-bN-Bvf" id="kvL-ro-7fw"/>
                         <outlet property="mapView" destination="82A-jC-Jak" id="Knl-Ul-rwc"/>
                     </connections>
                 </viewController>
