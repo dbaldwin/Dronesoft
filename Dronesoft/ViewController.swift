@@ -19,6 +19,11 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
     
     @IBOutlet weak var addressField: UITextField!
     
+    @IBOutlet weak var infoView: UIView!
+    
+    @IBOutlet weak var markerLabel: UILabel!
+    
+    @IBOutlet weak var acreLabel: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,6 +39,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         
         // Set the address field delegate
         addressField.delegate = self
+        
+        infoView.alpha = 0.85
 
     }
 
@@ -75,7 +82,21 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         polygon.fillColor = UIColor(red: 0, green: 0, blue: 1.0, alpha: 0.25);
         polygon.strokeColor = UIColor.whiteColor()
         polygon.strokeWidth = 2
+        polygon.tappable = true
         polygon.map = mapView
+        
+        // Update marker count
+        markerLabel.text = String(markers.count)
+        
+        // Update acreage calculation
+        if (rect.count() > 2) {
+            
+            let area = GMSGeometryArea(rect)
+            let acres = area * 0.00024711
+            
+            acreLabel.text = String(format: "%.02f", acres)
+            
+        }
      
     }
     
@@ -106,7 +127,28 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         polygon.fillColor = UIColor(red: 0, green: 0, blue: 1.0, alpha: 0.25);
         polygon.strokeColor = UIColor.whiteColor()
         polygon.strokeWidth = 2
+        polygon.tappable = true
         polygon.map = mapView
+        
+        // Update marker count
+        markerLabel.text = String(markers.count)
+        
+        // Update acreage calculation
+        if (rect.count() > 2) {
+            
+            let area = GMSGeometryArea(rect)
+            let acres = area * 0.00024711
+            
+            acreLabel.text = String(format: "%.02f", acres)
+            
+        }
+        
+    }
+    
+    // Check for polygon taps
+    func mapView(mapView: GMSMapView, didTapOverlay overlay: GMSOverlay) {
+        
+        // Doing nothing at the moment
         
     }
     
@@ -138,6 +180,9 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
     @IBAction func clearMap(sender: AnyObject) {
         mapView.clear()
         markers = [:]
+        markerLabel.text = "0"
+        acreLabel.text = "0"
+        
     }
     
     
