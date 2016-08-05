@@ -8,8 +8,9 @@
 
 import UIKit
 import GoogleMaps
+import DJISDK
 
-class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate {
+class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate, DJISDKManagerDelegate {
     
     var markers = [Int: GMSMarker]()
     
@@ -24,6 +25,21 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
     @IBOutlet weak var markerLabel: UILabel!
     
     @IBOutlet weak var acreLabel: UILabel!
+    
+    @IBOutlet weak var aircraftLabel: UILabel!
+    
+    @IBOutlet weak var firmwareLabel: UILabel!
+    
+    @IBOutlet weak var sdkLabel: UILabel!
+    
+    @IBOutlet weak var missionTypeSegmentedControl: UISegmentedControl!
+    
+    var missionTypeIndex : Int = 0
+    
+    // Hide the status bar as not to interfere with the info view
+    override func prefersStatusBarHidden() -> Bool {
+        return true
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,6 +57,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         addressField.delegate = self
         
         infoView.alpha = 0.85
+        
+        DJISDKManager.registerApp("e5dc7da3664c1a1f0daa4e46", withDelegate: self)
+        
+        sdkLabel.text = DJISDKManager.getSDKVersion()
 
     }
 
@@ -61,6 +81,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         newMarker.map = mapView
         newMarker.draggable = true
         newMarker.userData = index
+        newMarker.title = "Marker " + String(index)
         markers[index] = newMarker
         
         // Initalize the polygon rect
@@ -150,6 +171,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         
         // Doing nothing at the moment
         
+        
     }
     
     // MARK: UITextFieldDelegate
@@ -175,6 +197,57 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         
         return true
     }
+    
+    // MARK: DJISDKManagerDelegate
+    func sdkManagerDidRegisterAppWithError(error: NSError?) {
+        
+        guard error == nil  else {
+            print("Error:\(error!.localizedDescription)")
+            return
+        }
+        
+        // Setup web based logging
+        DJISDKManager.enableRemoteLoggingWithDeviceID("1", logServerURLString: "http://10.0.1.10:4567")
+        
+        #if arch(i386) || arch(x86_64)
+            //Simulator
+            DJISDKManager.enterDebugModeWithDebugId("10.128.129.59")
+        #else
+            //Device
+            DJISDKManager.startConnectionToProduct()
+        #endif
+        
+    }
+    
+    func sdkManagerProductDidChangeFrom(oldProduct: DJIBaseProduct?, to newProduct: DJIBaseProduct?) {
+        
+        guard let newProduct = newProduct else
+        {
+            logDebug("No product connected")
+            aircraftLabel.text = "Disconnected"
+            return
+        }
+        
+        aircraftLabel.text = newProduct.model
+        
+        // Updates the product's model
+        if let oldProduct = oldProduct {
+            logDebug("Product changed from: \(oldProduct.model) to \((newProduct.model)!)")
+            aircraftLabel.text = newProduct.model
+        }
+        
+        // Firmware version
+        newProduct.getFirmwarePackageVersionWithCompletion{ (version:String?, error:NSError?) -> Void in
+            self.logDebug("Firmware package version is: \(version ?? "Unknown")")
+            self.firmwareLabel.text = "POOP"
+        }
+        
+        //Updates the product's connection status
+        logDebug("Product connected")
+        
+    }
+    
+    // MARK: Map functions
 
     // Clear the map
     @IBAction func clearMap(sender: AnyObject) {
@@ -184,8 +257,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
         acreLabel.text = "0"
         
     }
-    
-    
+
     
     // Forward geocoding for a user to enter a city, zip, street and center the map
     func forwardGeocoding(address: String) {
@@ -202,5 +274,50 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate 
             }
         })
     }
+    
+    // MARK: UISegmentedControl
+    @IBAction func selectMissionType(sender: AnyObject) {
+        
+        missionTypeIndex = missionTypeSegmentedControl.selectedSegmentIndex
+        
+        print(missionTypeIndex)
+        
+    }
+    
+    // MARK: Logging methods
+    func logDebug<T>(object: T?, file: StaticString = #file, function: StaticString = #function, line: UInt = #line) {
+        let logText = convertToString(object)
+        DJIRemoteLogger.logWithLevel(.Debug, file: file.stringValue, function: function.stringValue, line: line, string: logText)
+    }
+    
+    func convertToString<T>(objectOpt: T?) -> String {
+        if let object = objectOpt
+        {
+            switch object
+            {
+            case let error as NSError:
+                let localizedDesc = error.localizedDescription
+                if !localizedDesc.isEmpty { return "\(error.domain) : \(error.code) : \(localizedDesc)" }
+                return "<<\(error.localizedDescription)>> --- ORIGINAL ERROR: \(error)"
+            case let nsobject as NSObject:
+                if nsobject.respondsToSelector(#selector(NSObject.debugDescription as () -> String)) {
+                    return nsobject.debugDescription
+                }
+                else
+                {
+                    return nsobject.description
+                }
+            default:
+                return "\(object)"
+            }
+        }
+        else
+        {
+            return "nil"
+        }
+        
+    }
+    
+    
 }
 

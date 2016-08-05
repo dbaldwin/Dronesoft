@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		17C7C2A88072F45709FCF8F2 /* Pods_Dronesoft.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7BC94606DA6D24D953849D0 /* Pods_Dronesoft.framework */; };
+		2347F0131D540ADC002C6C16 /* DJISDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2347F0111D540AA3002C6C16 /* DJISDK.framework */; };
+		2347F0141D540ADC002C6C16 /* DJISDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2347F0111D540AA3002C6C16 /* DJISDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		23A2D91C1D4D5135005A35EA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A2D91B1D4D5135005A35EA /* AppDelegate.swift */; };
 		23A2D91E1D4D5135005A35EA /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A2D91D1D4D5135005A35EA /* ViewController.swift */; };
 		23A2D9211D4D5135005A35EA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 23A2D91F1D4D5135005A35EA /* Main.storyboard */; };
@@ -29,8 +31,23 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		2347F0151D540ADC002C6C16 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				2347F0141D540ADC002C6C16 /* DJISDK.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		23251D8612F54E2EFE747437 /* Pods-Dronesoft.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Dronesoft.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Dronesoft/Pods-Dronesoft.debug.xcconfig"; sourceTree = "<group>"; };
+		2347F0111D540AA3002C6C16 /* DJISDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DJISDK.framework; sourceTree = "<group>"; };
 		23A2D9181D4D5135005A35EA /* Dronesoft.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Dronesoft.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23A2D91B1D4D5135005A35EA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		23A2D91D1D4D5135005A35EA /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -55,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2347F0131D540ADC002C6C16 /* DJISDK.framework in Frameworks */,
 				17C7C2A88072F45709FCF8F2 /* Pods_Dronesoft.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -96,6 +114,7 @@
 			children = (
 				23A2D91B1D4D5135005A35EA /* AppDelegate.swift */,
 				23A2D91D1D4D5135005A35EA /* ViewController.swift */,
+				2347F0111D540AA3002C6C16 /* DJISDK.framework */,
 				23A2D91F1D4D5135005A35EA /* Main.storyboard */,
 				23A2D9251D4D5135005A35EA /* Assets.xcassets */,
 				23A2D9271D4D5135005A35EA /* LaunchScreen.storyboard */,
@@ -147,6 +166,7 @@
 				23A2D9161D4D5135005A35EA /* Resources */,
 				23C45D89AA19D6E49D5882DB /* [CP] Embed Pods Frameworks */,
 				5D626435060CD5FBE3C7DA96 /* [CP] Copy Pods Resources */,
+				2347F0151D540ADC002C6C16 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -471,6 +491,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Dronesoft",
+				);
 				INFOPLIST_FILE = Dronesoft/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.unmannedairlines.DroneSoft;
@@ -484,6 +509,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Dronesoft",
+				);
 				INFOPLIST_FILE = Dronesoft/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.unmannedairlines.DroneSoft;
