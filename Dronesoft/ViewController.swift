@@ -10,9 +10,11 @@ import UIKit
 import GoogleMaps
 import DJISDK
 
-class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate, DJISDKManagerDelegate {
+class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate, DJISDKManagerDelegate, DJIFlightControllerDelegate {
     
     var markers = [Int: GMSMarker]()
+    
+    let aircraftMarker = GMSMarker()
     
     var polygon : GMSPolygon = GMSPolygon()
 
@@ -32,7 +34,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     
     @IBOutlet weak var sdkLabel: UILabel!
     
-    @IBOutlet weak var missionTypeSegmentedControl: UISegmentedControl!
+    @IBOutlet weak var satelliteLabel: UILabel!
     
     var missionTypeIndex : Int = 0
     
@@ -43,8 +45,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
         
+        // Set initial location of the map
         let camera = GMSCameraPosition.cameraWithLatitude(30.3074625, longitude: -98.0335949, zoom: 14.0)
         mapView.camera = camera
         mapView.myLocationEnabled = true
@@ -56,11 +58,20 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         // Set the address field delegate
         addressField.delegate = self
         
+        // Give a little transparency to the info view
         infoView.alpha = 0.85
         
+        /// Register our app with DJI's servers
         DJISDKManager.registerApp("e5dc7da3664c1a1f0daa4e46", withDelegate: self)
         
+        // Display the SDK version
         sdkLabel.text = DJISDKManager.getSDKVersion()
+        
+        // Initialize the aircraft marker
+        aircraftMarker.icon = UIImage(named: "Aircraft")
+        aircraftMarker.groundAnchor = CGPointMake(0.5, 0.5);
+        aircraftMarker.position = CLLocationCoordinate2D(latitude: 0, longitude: 0)
+        aircraftMarker.map = mapView
 
     }
 
@@ -239,11 +250,19 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         // Firmware version
         newProduct.getFirmwarePackageVersionWithCompletion{ (version:String?, error:NSError?) -> Void in
             self.logDebug("Firmware package version is: \(version ?? "Unknown")")
-            self.firmwareLabel.text = "POOP"
+            self.firmwareLabel.text = version
         }
         
         //Updates the product's connection status
         logDebug("Product connected")
+        
+        // Setup the flight controller delegate
+        if (newProduct is DJIAircraft) {
+            
+            let aircraft: DJIAircraft = newProduct as! DJIAircraft
+            aircraft.flightController?.delegate = self
+            
+        }
         
     }
     
@@ -275,13 +294,28 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         })
     }
     
-    // MARK: UISegmentedControl
-    @IBAction func selectMissionType(sender: AnyObject) {
+    // MARK: DJIFlightControllerDelegate
+    func flightController(fc: DJIFlightController, didUpdateSystemState state: DJIFlightControllerCurrentState) {
         
-        missionTypeIndex = missionTypeSegmentedControl.selectedSegmentIndex
+        aircraftMarker.position = state.aircraftLocation
         
-        print(missionTypeIndex)
+        // Set the heading of the marker
+        let heading = state.attitude.yaw
+        heading >= 0 ? heading : heading + 360.0
+        aircraftMarker.rotation = heading
         
+        satelliteLabel.text = String(state.satelliteCount)
+        
+        /*self.currentState = state
+        self.aircraftLocation = state.aircraftLocation
+        if CLLocationCoordinate2DIsValid(state.aircraftLocation) {
+            let heading: Double = state.attitude.yaw*M_PI/180.0
+            djiMapView!.updateAircraftLocation(state.aircraftLocation, withHeading: heading)
+            
+        }
+        if CLLocationCoordinate2DIsValid(state.homeLocation) {
+            djiMapView!.updateHomeLocation(state.homeLocation)
+        }*/
     }
     
     // MARK: Logging methods
