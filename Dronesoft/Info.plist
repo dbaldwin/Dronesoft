@@ -55,5 +55,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Allowing access to your current location will make mission planning easier</string>
 </dict>
 </plist>
