@@ -221,6 +221,13 @@
                                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
+                                    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="6he-jz-Iq6">
+                                        <rect key="frame" x="15" y="356" width="170" height="31"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="166" id="Ra8-f2-L97"/>
+                                            <constraint firstAttribute="height" constant="30" id="m5p-Pq-an2"/>
+                                        </constraints>
+                                    </slider>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
@@ -242,6 +249,7 @@
                                     <constraint firstItem="Q0H-B8-cKs" firstAttribute="leading" secondItem="wYr-Ej-3Ux" secondAttribute="leading" constant="8" id="Ipf-z7-j3x"/>
                                     <constraint firstItem="I7G-LA-kdj" firstAttribute="leading" secondItem="wYr-Ej-3Ux" secondAttribute="leading" constant="8" id="JiU-r6-Qtg"/>
                                     <constraint firstAttribute="width" constant="200" id="Jx8-PS-Ecx"/>
+                                    <constraint firstItem="6he-jz-Iq6" firstAttribute="centerX" secondItem="wYr-Ej-3Ux" secondAttribute="centerX" id="KRN-cM-L0R"/>
                                     <constraint firstItem="EZh-oS-Cae" firstAttribute="top" secondItem="1SS-hL-Mql" secondAttribute="bottom" constant="8" id="Mpb-4q-DOY"/>
                                     <constraint firstItem="kfc-Fm-be9" firstAttribute="top" secondItem="q8T-X5-CWv" secondAttribute="bottom" constant="8" id="N6d-sW-LEW"/>
                                     <constraint firstItem="XeF-zm-B7z" firstAttribute="top" secondItem="wYr-Ej-3Ux" secondAttribute="top" constant="8" id="NTh-Dq-l3P"/>
@@ -261,6 +269,7 @@
                                     <constraint firstItem="EZh-oS-Cae" firstAttribute="leading" secondItem="I7G-LA-kdj" secondAttribute="trailing" constant="6" id="pll-fA-bjY"/>
                                     <constraint firstItem="kfc-Fm-be9" firstAttribute="leading" secondItem="wYr-Ej-3Ux" secondAttribute="leading" constant="8" id="sNh-rA-e7h"/>
                                     <constraint firstItem="U7S-rm-aEh" firstAttribute="leading" secondItem="wYr-Ej-3Ux" secondAttribute="leading" constant="8" id="tKg-HS-pMR"/>
+                                    <constraint firstAttribute="bottom" secondItem="6he-jz-Iq6" secondAttribute="bottom" constant="14" id="teH-3I-QYv"/>
                                     <constraint firstItem="1SS-hL-Mql" firstAttribute="top" secondItem="smP-wZ-qge" secondAttribute="bottom" constant="8" id="uFs-sJ-vgQ"/>
                                     <constraint firstItem="smP-wZ-qge" firstAttribute="top" secondItem="wYr-Ej-3Ux" secondAttribute="top" constant="8" id="w3S-hn-xfk"/>
                                     <constraint firstItem="1yw-9e-1zY" firstAttribute="leading" secondItem="wYr-Ej-3Ux" secondAttribute="leading" constant="8" id="yba-bW-OfH"/>
@@ -277,16 +286,29 @@
                                 <textInputTraits key="textInputTraits" returnKeyType="search"/>
                             </textField>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AKc-oP-7gE">
-                                <rect key="frame" x="438" y="698" width="147" height="30"/>
+                                <rect key="frame" x="461" y="698" width="102" height="30"/>
                                 <color key="backgroundColor" red="0.0" green="0.54004506885593795" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="147" id="Zzm-4m-mhe"/>
+                                    <constraint firstAttribute="width" constant="102" id="Zzm-4m-mhe"/>
                                     <constraint firstAttribute="height" constant="30" id="fOs-a9-bS2"/>
                                 </constraints>
                                 <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <state key="normal" title="Clear Map"/>
                                 <connections>
                                     <action selector="clearMap:" destination="BYZ-38-t0r" eventType="touchUpInside" id="nTN-LR-0VI"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="PyM-Ki-AaQ">
+                                <rect key="frame" x="571" y="698" width="102" height="30"/>
+                                <color key="backgroundColor" red="0.0" green="0.54004506890000004" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="102" id="1Wu-Gv-ik9"/>
+                                    <constraint firstAttribute="height" constant="30" id="Thu-7b-onS"/>
+                                </constraints>
+                                <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <state key="normal" title="Fly Mission"/>
+                                <connections>
+                                    <action selector="confirmStartMission:" destination="BYZ-38-t0r" eventType="touchUpInside" id="HIq-dI-QYZ"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -299,6 +321,8 @@
                             <constraint firstItem="CDZ-bN-Bvf" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-10" id="TW9-cH-0Xc"/>
                             <constraint firstItem="AKc-oP-7gE" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="URg-op-SUv"/>
                             <constraint firstItem="wYr-Ej-3Ux" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="topMargin" id="cyP-vI-x7I"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="PyM-Ki-AaQ" secondAttribute="bottom" constant="40" id="dvZ-KB-C0w"/>
+                            <constraint firstItem="PyM-Ki-AaQ" firstAttribute="leading" secondItem="AKc-oP-7gE" secondAttribute="trailing" constant="8" id="fgb-u7-JMf"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="AKc-oP-7gE" secondAttribute="bottom" constant="40" id="fh9-Mf-sUn"/>
                             <constraint firstItem="82A-jC-Jak" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="kgl-E1-Hfb"/>
                             <constraint firstItem="82A-jC-Jak" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="nE1-cJ-O0t"/>

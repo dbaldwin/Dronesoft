@@ -10,7 +10,7 @@ import UIKit
 import GoogleMaps
 import DJISDK
 
-class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate, DJISDKManagerDelegate, DJIFlightControllerDelegate {
+class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate, DJISDKManagerDelegate, DJIFlightControllerDelegate, DJIMissionManagerDelegate {
     
     var markers = [Int: GMSMarker]()
     
@@ -36,7 +36,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     
     @IBOutlet weak var satelliteLabel: UILabel!
     
-    var missionTypeIndex : Int = 0
+    var missionManager : DJIMissionManager? = nil
     
     // Hide the status bar as not to interfere with the info view
     override func prefersStatusBarHidden() -> Bool {
@@ -72,6 +72,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         aircraftMarker.groundAnchor = CGPointMake(0.5, 0.5);
         aircraftMarker.position = CLLocationCoordinate2D(latitude: 0, longitude: 0)
         aircraftMarker.map = mapView
+        
+        // Setting up the mission manager
+        self.missionManager = DJIMissionManager.sharedInstance()
+        self.missionManager!.delegate = self
 
     }
 
@@ -306,16 +310,77 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         
         satelliteLabel.text = String(state.satelliteCount)
         
-        /*self.currentState = state
-        self.aircraftLocation = state.aircraftLocation
-        if CLLocationCoordinate2DIsValid(state.aircraftLocation) {
-            let heading: Double = state.attitude.yaw*M_PI/180.0
-            djiMapView!.updateAircraftLocation(state.aircraftLocation, withHeading: heading)
+    }
+    
+    // MARK: Mission methods
+    
+    @IBAction func confirmStartMission(sender: AnyObject) {
+        
+        // Make sure there are at least 2 waypoints
+        
+        // Make sure there are enough sats
+        
+        // For now hardcode speed and altitude
+        
+        let refreshAlert = UIAlertController(title: "Confirm", message: "Are you ready to start the mission?", preferredStyle: UIAlertControllerStyle.Alert)
+        
+        
+        refreshAlert.addAction(UIAlertAction(title: "Yes", style: .Default, handler: { (action: UIAlertAction!) in
+            
+            self.uploadAndStartMission()
+            
+        }))
+        
+        refreshAlert.addAction(UIAlertAction(title: "No", style: .Cancel, handler: { (action: UIAlertAction!) in
+            
+            // Do nothing when confirmation is canceled
+            
+        }))
+        
+        presentViewController(refreshAlert, animated: true, completion: nil)
+        
+    }
+    
+    // Build up the waypoint mission and then takeoff
+    func uploadAndStartMission () {
+        
+        logDebug("Upload and start mission")
+        
+        let mission : DJIWaypointMission = DJIWaypointMission()
+        mission.autoFlightSpeed = 5 // m/s
+        mission.finishedAction = DJIWaypointMissionFinishedAction.GoHome
+        mission.headingMode = DJIWaypointMissionHeadingMode.Auto
+        mission.flightPathMode = DJIWaypointMissionFlightPathMode.Normal
+        
+        // Enumerate the markers and create waypoints
+        for(_, value) in markers {
+            
+            let waypoint : DJIWaypoint = DJIWaypoint()
+            waypoint.coordinate = value.position
+            waypoint.altitude = 30
+            mission.addWaypoint(waypoint)
+            
+            logDebug("Waypoint: " + String(waypoint.coordinate.latitude) + "," + String(waypoint.coordinate.longitude))
             
         }
-        if CLLocationCoordinate2DIsValid(state.homeLocation) {
-            djiMapView!.updateHomeLocation(state.homeLocation)
-        }*/
+        
+        // Upload the mission and then execute it
+        self.missionManager!.prepareMission(mission, withProgress: nil, withCompletion:
+            {[weak self] (error: NSError?) -> Void in
+                if error == nil {
+                    self?.missionManager!.startMissionExecutionWithCompletion({ [weak self] (error: NSError?) -> Void in
+                        if error != nil {
+                            print("Error starting mission" + "abcd")
+                            self!.logDebug("Error starting mission: " + (error?.description)!)
+                        
+                        }
+                    })
+                } else {
+                    print("Error preparing mission")
+                    self!.logDebug("Error preparing mission: " + (error?.description)!)
+                }
+            
+            })
     }
     
     // MARK: Logging methods
