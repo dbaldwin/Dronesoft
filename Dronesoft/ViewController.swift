@@ -347,7 +347,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         logDebug("Upload and start mission")
         
         let mission : DJIWaypointMission = DJIWaypointMission()
-        mission.autoFlightSpeed = 5 // m/s
+        mission.autoFlightSpeed = 8 // m/s
         mission.finishedAction = DJIWaypointMissionFinishedAction.GoHome
         mission.headingMode = DJIWaypointMissionHeadingMode.Auto
         mission.flightPathMode = DJIWaypointMissionFlightPathMode.Normal
