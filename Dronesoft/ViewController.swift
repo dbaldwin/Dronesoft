@@ -53,13 +53,15 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         mapView.mapType = kGMSTypeHybrid
         mapView.myLocationEnabled = true
         mapView.settings.myLocationButton = true
+        mapView.settings.compassButton = true
+        mapView.padding = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 200)
         mapView.delegate = self
         
         // Set the address field delegate
         addressField.delegate = self
         
         // Give a little transparency to the info view
-        infoView.alpha = 0.85
+        infoView.alpha = 0.90
         
         /// Register our app with DJI's servers
         DJISDKManager.registerApp("e5dc7da3664c1a1f0daa4e46", withDelegate: self)
