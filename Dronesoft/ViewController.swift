@@ -12,11 +12,24 @@ import DJISDK
 
 class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate, DJISDKManagerDelegate, DJIFlightControllerDelegate, DJIMissionManagerDelegate {
     
-    var markers = [Int: GMSMarker]()
+    var markers : [GMSMarker]!
     
     let aircraftMarker = GMSMarker()
     
-    var polygon : GMSPolygon = GMSPolygon()
+    var polygon : GMSPolygon!
+    
+    var polygonOutline : GMSMutablePath {
+        get {
+            let path = GMSMutablePath()
+            if markers.count == 0 {
+                return path
+            }
+            for marker in markers {
+                path.addCoordinate(marker.position)
+            }
+            return path
+        }
+    }
 
     @IBOutlet weak var mapView: GMSMapView!
     
@@ -46,6 +59,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Variable Initializations
+        markers = [GMSMarker]()
+        polygon = GMSPolygon()
+        
         // Set initial location of the map
         let camera = GMSCameraPosition.cameraWithLatitude(30.3074625, longitude: -98.0335949, zoom: 14.0)
         mapView.camera = camera
@@ -72,7 +89,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         // Initialize the aircraft marker
         aircraftMarker.icon = UIImage(named: "Aircraft")
         aircraftMarker.groundAnchor = CGPointMake(0.5, 0.5);
-        aircraftMarker.position = CLLocationCoordinate2D(latitude: 0, longitude: 0)
+        aircraftMarker.position = CLLocationCoordinate2D(latitude: 30.3074625, longitude: -98.0335949)
         aircraftMarker.map = mapView
         
         // Setting up the mission manager
@@ -86,112 +103,39 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         // Dispose of any resources that can be recreated.
     }
     
-    // MARK: GMSMapViewDelegate
+    
+    // MARK: - GMSMapViewDelegate
     
     // When a user taps on the map we add a marker
     func mapView(mapView: GMSMapView, didTapAtCoordinate coordinate: CLLocationCoordinate2D) {
-        
         // Create a new marker and append it to the dictionary
-        let index = markers.count + 1
+        let index = markers.count
         let newMarker = GMSMarker()
         newMarker.position = coordinate
         newMarker.map = mapView
         newMarker.draggable = true
         newMarker.userData = index
         newMarker.title = "Marker " + String(index)
-        markers[index] = newMarker
+        markers.append(newMarker)
         
-        // Initalize the polygon rect
-        let rect = GMSMutablePath()
-        
-        // Enumerate the dictionary and build the poly rect
-        for(_, value) in markers {
-            
-            // Append the marker position to the polygon rect
-            rect.addCoordinate(value.position)
-            
-        }
-        
-        // Clear the polygon off the map
-        polygon.map = nil
-        
-        // Draw the polygon on the map
-        polygon = GMSPolygon(path: rect)
-        polygon.fillColor = UIColor(red: 0, green: 0, blue: 1.0, alpha: 0.25);
-        polygon.strokeColor = UIColor.whiteColor()
-        polygon.strokeWidth = 2
-        polygon.tappable = true
-        polygon.map = mapView
-        
-        // Update marker count
-        markerLabel.text = String(markers.count)
-        
-        // Update acreage calculation
-        if (rect.count() > 2) {
-            
-            let area = GMSGeometryArea(rect)
-            let acres = area * 0.00024711
-            
-            acreLabel.text = String(format: "%.02f", acres)
-            
-        }
-     
+        drawPolygonFromMarkers()
     }
     
-    // TODO: Refactor redundant code below
     // Marker dragging code
     func mapView(mapView: GMSMapView, didEndDraggingMarker marker: GMSMarker) {
-        
-        // Update the marker's position in the dictionary
-        let index = marker.userData as? Int
-        let oldMarker: GMSMarker = markers[index!]!
-        oldMarker.position = marker.position
-        
-        // Initalize the polygon rect
-        let rect = GMSMutablePath()
-        
-        for (_, value) in markers {
-            
-            // Append the marker position to the polygon rect
-            rect.addCoordinate(value.position)
-            
-        }
-        
-        // Clear the polygon off the map
-        polygon.map = nil
-        
-        // Redraw the polygon
-        polygon = GMSPolygon(path: rect)
-        polygon.fillColor = UIColor(red: 0, green: 0, blue: 1.0, alpha: 0.25);
-        polygon.strokeColor = UIColor.whiteColor()
-        polygon.strokeWidth = 2
-        polygon.tappable = true
-        polygon.map = mapView
-        
-        // Update marker count
-        markerLabel.text = String(markers.count)
-        
-        // Update acreage calculation
-        if (rect.count() > 2) {
-            
-            let area = GMSGeometryArea(rect)
-            let acres = area * 0.00024711
-            
-            acreLabel.text = String(format: "%.02f", acres)
-            
-        }
-        
+        drawPolygonFromMarkers()
     }
     
     // Check for polygon taps
     func mapView(mapView: GMSMapView, didTapOverlay overlay: GMSOverlay) {
         
         // Doing nothing at the moment
-        
+        NSLog("didTapOverlay")
         
     }
     
-    // MARK: UITextFieldDelegate
+    
+    // MARK: - UITextFieldDelegate
     
     func textFieldShouldReturn(textField: UITextField) -> Bool {
         addressField.resignFirstResponder()
@@ -215,7 +159,61 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         return true
     }
     
-    // MARK: DJISDKManagerDelegate
+    
+    // MARK: - Map functions
+    
+    // Clear the map
+    @IBAction func clearMap(sender: AnyObject) {
+        mapView.clear()
+        markers = [GMSMarker]()
+        markerLabel.text = "0"
+        acreLabel.text = "0"
+        
+    }
+    
+    // Forward geocoding for a user to enter a city, zip, street and center the map
+    func forwardGeocoding(address: String) {
+        CLGeocoder().geocodeAddressString(address, completionHandler: { (placemarks, error) in
+            if error != nil {
+                print(error)
+                return
+            }
+            if placemarks?.count > 0 {
+                let placemark = placemarks?[0]
+                let location = placemark?.location
+                let coordinate = location?.coordinate
+                print("\nlat: \(coordinate!.latitude), long: \(coordinate!.longitude)")
+            }
+        })
+    }
+    
+    func drawPolygonFromMarkers() {
+        // Clear the polygon off the map
+        polygon.map = nil
+        
+        // Draw the polygon on the map
+        polygon = GMSPolygon(path: polygonOutline)
+        polygon.fillColor = UIColor(red: 0, green: 0, blue: 1.0, alpha: 0.25);
+        polygon.strokeColor = UIColor.whiteColor()
+        polygon.strokeWidth = 2
+        polygon.tappable = true
+        polygon.map = mapView
+        
+        // Update marker count
+        markerLabel.text = String(markers.count)
+        
+        // Update acreage calculation
+        if (polygonOutline.count() > 2) {
+            let area = GMSGeometryArea(polygonOutline)
+            let acres = area * 0.00024711
+            
+            acreLabel.text = String(format: "%.02f", acres)
+        }
+    }
+    
+    
+    // MARK: - DJISDKManagerDelegate
+    
     func sdkManagerDidRegisterAppWithError(error: NSError?) {
         
         guard error == nil  else {
@@ -272,35 +270,9 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         
     }
     
-    // MARK: Map functions
-
-    // Clear the map
-    @IBAction func clearMap(sender: AnyObject) {
-        mapView.clear()
-        markers = [:]
-        markerLabel.text = "0"
-        acreLabel.text = "0"
-        
-    }
-
     
-    // Forward geocoding for a user to enter a city, zip, street and center the map
-    func forwardGeocoding(address: String) {
-        CLGeocoder().geocodeAddressString(address, completionHandler: { (placemarks, error) in
-            if error != nil {
-                print(error)
-                return
-            }
-            if placemarks?.count > 0 {
-                let placemark = placemarks?[0]
-                let location = placemark?.location
-                let coordinate = location?.coordinate
-                print("\nlat: \(coordinate!.latitude), long: \(coordinate!.longitude)")
-            }
-        })
-    }
+    // MARK: - DJIFlightControllerDelegate
     
-    // MARK: DJIFlightControllerDelegate
     func flightController(fc: DJIFlightController, didUpdateSystemState state: DJIFlightControllerCurrentState) {
         
         aircraftMarker.position = state.aircraftLocation
@@ -314,7 +286,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         
     }
     
-    // MARK: Mission methods
+    
+    // MARK: - Mission methods
     
     @IBAction func confirmStartMission(sender: AnyObject) {
         
@@ -355,10 +328,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         mission.flightPathMode = DJIWaypointMissionFlightPathMode.Normal
         
         // Enumerate the markers and create waypoints
-        for(_, value) in markers {
+        for marker in markers {
             
             let waypoint : DJIWaypoint = DJIWaypoint()
-            waypoint.coordinate = value.position
+            waypoint.coordinate = marker.position
             waypoint.altitude = 30
             mission.addWaypoint(waypoint)
             
@@ -385,7 +358,9 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
             })
     }
     
-    // MARK: Logging methods
+    
+    // MARK: - Utilities: Logging
+    
     func logDebug<T>(object: T?, file: StaticString = #file, function: StaticString = #function, line: UInt = #line) {
         let logText = convertToString(object)
         DJIRemoteLogger.logWithLevel(.Debug, file: file.stringValue, function: function.stringValue, line: line, string: logText)
