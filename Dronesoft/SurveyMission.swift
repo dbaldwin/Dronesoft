@@ -170,7 +170,7 @@ class SurveyMission: NSObject {
         polygon.strokeWidth = 2
         polygon.tappable = true
         flightPath = GMSPolyline()
-        flightPath.strokeColor = UIColor.whiteColor()
+        flightPath.strokeColor = UIColor.redColor()
         self.delegate = delegate
     }
     

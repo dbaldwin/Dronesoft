@@ -176,6 +176,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     
     func surveyMissionFlightPathUpdated(flightPath: GMSPolyline) {
         flightPath.map = mapView
+        aircraftMarker.position = (flightPath.path?.coordinateAtIndex(0))!
         //TODO: Update flightpath related UI items.
     }
     
