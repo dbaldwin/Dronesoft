@@ -91,7 +91,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     
     // When a user taps on the map we add a marker
     func mapView(mapView: GMSMapView, didTapAtCoordinate coordinate: CLLocationCoordinate2D) {
-        surveyMission.addMarkerToPolygon(atLocation: coordinate)
+        surveyMission.addMarkerToPolygon(atLocation: coordinate)//.roundCoordinateToPrecision(8))
     }
     
     // Marker dragging code
@@ -177,6 +177,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     func surveyMissionFlightPathUpdated(flightPath: GMSPolyline) {
         flightPath.map = mapView
         aircraftMarker.position = (flightPath.path?.coordinateAtIndex(0))!
+        aircraftMarker.map = mapView
         //TODO: Update flightpath related UI items.
     }
     

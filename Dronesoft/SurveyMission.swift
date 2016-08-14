@@ -73,6 +73,14 @@ struct Line {
             return nil;
         }
     }
+    
+    // MARK: DEBUG ONLY FUNC
+    func displayOnMap(mapView: GMSMapView) {
+        let linePath = GMSMutablePath()
+        linePath.addCoordinate(pt1)
+        linePath.addCoordinate(pt2)
+        GMSPolyline(path: linePath).map = mapView
+    }
 }
 
 struct ContainerRect {
@@ -126,6 +134,19 @@ struct ContainerRect {
         get {
             return ceil(GMSGeometryDistance(topLeftCornerPt, bottomLeftCornerPt))
         }
+    }
+    var path : GMSMutablePath {
+        let rectPath = GMSMutablePath()
+        rectPath.addCoordinate(topLeftCornerPt)//.ceilCoordinateAfterDecimals(5))
+        rectPath.addCoordinate(bottomLeftCornerPt)//.ceilCoordinateAfterDecimals(5))
+        rectPath.addCoordinate(bottomRightCornerPt)//.ceilCoordinateAfterDecimals(5))
+        rectPath.addCoordinate(topRightCornerPt)//.ceilCoordinateAfterDecimals(5))
+        return rectPath
+    }
+    
+    // MARK: DEBUG ONLY FUNC
+    func displayOnMap(mapView: GMSMapView) {
+        GMSPolygon(path: path).map = mapView
     }
 }
 
@@ -198,6 +219,7 @@ class SurveyMission: NSObject {
     }
     
     func computeFlightPath(entryCorner : EntryCorner) -> [CLLocationCoordinate2D] {
+        
         if markers.count < 3 {
             missionWaypoints = [CLLocationCoordinate2D]()
             return missionWaypoints
@@ -211,36 +233,42 @@ class SurveyMission: NSObject {
             polygonLines.append(Line(pt1: markers[i].position, pt2: markers[i+1].position))
         }
         polygonLines.append(Line(pt1: markers.last!.position, pt2: markers.first!.position))
+        
         let containerRect : ContainerRect = ContainerRect.getContainerRect(markerCoordinates)
         let gridLineLength : Double = containerRect.horizontalDistance
         let gridVerticalDist : Double = containerRect.verticalDistance
         
-        // TODO: GET ACTUAL CAMERA PROFILE!
+        // TODO: GET ACTUAL CAMERA PROFILE HERE!
         
         let gridLineSpacingInMeters : Double = 50 // = 0.5 * cameraHorizontalFOV
         let numOfGridLines : Int = Int(ceil(gridVerticalDist/gridLineSpacingInMeters))
         //var grid : [Line] = [Line]()
         var intersections : [[CLLocationCoordinate2D]] = [[CLLocationCoordinate2D]]()
-        for i in 0..<numOfGridLines {
+        for _ in 0..<numOfGridLines {
             intersections.append([CLLocationCoordinate2D]())
         }
         
-        // TODO: SECTION TO BE EDITED:
+        /* TODO: SECTION TO BE COMPLETED: DEBUG & IMPROVE FIRST
+            THEN IMPLEMENT .BottomLeft and .BottomRight entries
+         */
         if entryCorner == .TopLeft || entryCorner == .TopRight {
             for i in 1..<numOfGridLines {
-                var line : Line = Line(pt1: GMSGeometryOffset(containerRect.topLeftCornerPt, Double(i)*gridLineSpacingInMeters, 180), pt2: GMSGeometryOffset(containerRect.topRightCornerPt, Double(i)*gridLineSpacingInMeters, 180))
+                let line : Line = Line(pt1: GMSGeometryOffset(containerRect.topLeftCornerPt, Double(i)*gridLineSpacingInMeters, 180), pt2: GMSGeometryOffset(containerRect.topRightCornerPt, Double(i)*gridLineSpacingInMeters, 180))
                 //grid.append(line)
+                line.displayOnMap(polygon.map!)
                 for anotherLine in polygonLines {
                     if let intersection = line.getIntersectionWith(anotherLine: anotherLine) {
-                        if GMSGeometryContainsLocation(intersection, polygonPath, true) {
+                        if GMSGeometryContainsLocation(intersection, containerRect.path, true) {
                             intersections[i].append(intersection)
                         }
                     }
                 }
-                if entryCorner == .TopLeft {
-                    intersections[i].sort{ $0.longitude < $1.longitude }
-                } else if entryCorner == .TopRight {
-                    intersections[i].sort{ $0.longitude > $1.longitude }
+                if (entryCorner == .TopLeft && i % 2 == 1) ||
+                    (entryCorner == .TopRight && i % 2 == 0) {
+                    intersections[i].sortInPlace{ $0.longitude < $1.longitude }
+                } else if (entryCorner == .TopRight && i % 2 == 1) ||
+                    (entryCorner == .TopLeft && i % 2 == 0) {
+                    intersections[i].sortInPlace{ $0.longitude > $1.longitude }
                 }
                 for intersection in intersections[i] {
                     flightWaypoints.append(intersection)
@@ -250,6 +278,9 @@ class SurveyMission: NSObject {
             flightWaypoints.append(closestPointTo(containerRect.bottomLeftCornerPt, among: markerCoordinates))
             flightWaypoints.append(GMSGeometryOffset(flightWaypoints[0], 100, 45))
         }
+        
+        // Debug
+        containerRect.displayOnMap(polygon.map!)
         
         // TODO: SECTION ENDS
         
@@ -271,8 +302,29 @@ class SurveyMission: NSObject {
         return closestPt
     }
     
+    func getSlightlyEnlargePolygonPath() -> GMSMutablePath {
+        /* TODO: IMPLEMENT THIS METHOD and change "containerRect.path" in line
+                if GMSGeometryContainsLocation(intersection, containerRect.path, true)
+            around line 261 to the return value of this func.
+         */
+        return polygonPath
+    }
+    
     func clear() {
         markers = [GMSMarker]()
     }
     
+}
+
+extension CLLocationCoordinate2D {
+    func ceilCoordinateAfterDecimals(decimals: Int) -> CLLocationCoordinate2D {
+        print("\(self), \(self.latitude.ceilAfterDecimals(5))")
+        return CLLocationCoordinate2D(latitude: latitude.ceilAfterDecimals(decimals), longitude: longitude.ceilAfterDecimals(decimals))
+    }
+}
+
+extension CLLocationDegrees{
+    func ceilAfterDecimals(decimals: Int) -> CLLocationDegrees {
+        return ceil((pow(10.0, Double(decimals))*self))/pow(10.0, Double(decimals))
+    }
 }
