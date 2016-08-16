@@ -157,16 +157,16 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         })
     }
     
-    func surveyMissionNewMarkerAdded(markers: [GMSMarker]) {
+    func surveyMissionDidAddNewMarker(markers: [GMSMarker]) {
         markers.last?.map = mapView
         surveyMission.updatePolygon()
     }
     
-    func surveyMissionPolygonUpdated(polygon: GMSPolygon) {
+    func surveyMissionDidUpdatePolygon(polygon: GMSPolygon) {
         surveyMission.polygon.map = mapView
         
         markerLabel.text = "\(surveyMission.markers.count)"
-        if (surveyMission.markers.count > 2) {
+        if surveyMission.markers.count > 2 {
             let area = GMSGeometryArea(surveyMission.polygonPath)
             let acres = area * 0.00024711
             
@@ -174,10 +174,16 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         }
     }
     
-    func surveyMissionFlightPathUpdated(flightPath: GMSPolyline) {
+    func surveyMissionDidUpdateFlightPath(flightPath: GMSPolyline) {
         flightPath.map = mapView
+        
+        /* TODO: Debug why aircraftMarker isn't repositioning correctly after polygon is redrawn.
+        * Note: the coordinate has been verified as correct.
+        * Verifiable by drawing a default marker at the specified location: (flightPath.path?.coordinateAtIndex(0))!.
+        */
         aircraftMarker.position = (flightPath.path?.coordinateAtIndex(0))!
         aircraftMarker.map = mapView
+        
         //TODO: Update flightpath related UI items.
     }
     
@@ -230,7 +236,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         logDebug("Product connected")
         
         // Setup the flight controller delegate
-        if (newProduct is DJIAircraft) {
+        if newProduct is DJIAircraft {
             
             let aircraft: DJIAircraft = newProduct as! DJIAircraft
             aircraft.flightController?.delegate = self
@@ -260,11 +266,13 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     
     @IBAction func confirmStartMission(sender: AnyObject) {
         
-        // Make sure there are at least 2 waypoints
-        
-        // Make sure there are enough sats
-        
-        // For now hardcode speed and altitude
+        /* TODO: Preflight Conditions Check
+         *      - there are at least 2 waypoints; (the survey mission waypoints might only contain one due to extreme small region, so maybe append aircraft location to make sure of that?)
+         *      - there are enough sats;
+         *      - display another alert if aircraft is still on the ground
+         *      - calculate speed and altitude based on camera profile and user input
+         *          -> hardcode for now
+         */
         
         let refreshAlert = UIAlertController(title: "Confirm", message: "Are you ready to start the mission?", preferredStyle: UIAlertControllerStyle.Alert)
         
@@ -297,14 +305,14 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         mission.flightPathMode = DJIWaypointMissionFlightPathMode.Normal
         
         // Enumerate the markers and create waypoints
-        for marker in surveyMission.markers {
+        for wpt in surveyMission.missionWaypoints {
             
-            let waypoint : DJIWaypoint = DJIWaypoint()
-            waypoint.coordinate = marker.position
-            waypoint.altitude = 30
-            mission.addWaypoint(waypoint)
+            let djiWpt : DJIWaypoint = DJIWaypoint()
+            djiWpt.coordinate = wpt
+            djiWpt.altitude = 30
+            mission.addWaypoint(djiWpt)
             
-            logDebug("Waypoint: \(waypoint.coordinate.latitude), \(waypoint.coordinate.longitude)")
+            logDebug("Waypoint: \(djiWpt.coordinate.latitude), \(djiWpt.coordinate.longitude)")
             
         }
         

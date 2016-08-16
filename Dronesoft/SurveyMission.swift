@@ -11,9 +11,9 @@ import CoreLocation
 import GoogleMaps
 
 protocol SurveyMissionDelegate {
-    func surveyMissionNewMarkerAdded(markers: [GMSMarker])
-    func surveyMissionPolygonUpdated(polygon: GMSPolygon)
-    func surveyMissionFlightPathUpdated(flightPath: GMSPolyline)
+    func surveyMissionDidAddNewMarker(markers: [GMSMarker])
+    func surveyMissionDidUpdatePolygon(polygon: GMSPolygon)
+    func surveyMissionDidUpdateFlightPath(flightPath: GMSPolyline)
 }
 
 enum EntryCorner : String {
@@ -65,7 +65,7 @@ struct Line {
         let (d, e, f) = line.coefficients
         
         let determinant = a*e - b*d;
-        if(determinant != 0) {
+        if determinant != 0 {
             let x = (c*e - b*f)/determinant;
             let y = (a*f - c*d)/determinant;
             return CLLocationCoordinate2D(latitude: y, longitude: x)
@@ -151,24 +151,24 @@ struct ContainerRect {
 }
 
 class SurveyMission: NSObject {
-    var markers : [GMSMarker]!
-    
-    var polygon : GMSPolygon!
-    
-    var delegate : SurveyMissionDelegate? = nil
-    
-    private(set) var missionWaypoints : [CLLocationCoordinate2D]! {
+    var markers : [GMSMarker]! {
         didSet {
-            let path : GMSMutablePath = GMSMutablePath()
-            for coordinate in missionWaypoints {
-                path.addCoordinate(coordinate)
+            if markers.count == 0 {
+                polygonCenter = CLLocationCoordinate2D()
             }
-            flightPath.path = path
-            delegate?.surveyMissionFlightPathUpdated(flightPath)
+            
+            var cumulativeLat : Double = 0.0, cumulativeLong : Double = 0.0
+            for marker in markers {
+                cumulativeLat += marker.position.latitude
+                cumulativeLong += marker.position.longitude
+            }
+            polygonCenter = CLLocationCoordinate2D(latitude: cumulativeLat/Double(markers.count), longitude: cumulativeLong/Double(markers.count))
         }
     }
     
-    private(set) var flightPath : GMSPolyline!
+    var polygon : GMSPolygon!
+    
+    private(set) var polygonCenter : CLLocationCoordinate2D!
     
     var polygonPath : GMSMutablePath {
         get {
@@ -183,15 +183,36 @@ class SurveyMission: NSObject {
         }
     }
     
+    var delegate : SurveyMissionDelegate? = nil
+    
+    private(set) var missionWaypoints : [CLLocationCoordinate2D]! {
+        didSet {
+            let path : GMSMutablePath = GMSMutablePath()
+            for coordinate in missionWaypoints {
+                path.addCoordinate(coordinate)
+            }
+            flightPath.path = path
+            delegate?.surveyMissionDidUpdateFlightPath(flightPath)
+        }
+    }
+    
+    private(set) var flightPath : GMSPolyline!
+    
     init(delegate : SurveyMissionDelegate) {
         markers = [GMSMarker]()
+        
         polygon = GMSPolygon()
         polygon.fillColor = UIColor(red: 0, green: 0, blue: 1.0, alpha: 0.25);
         polygon.strokeColor = UIColor.whiteColor()
         polygon.strokeWidth = 2
         polygon.tappable = true
+        
         flightPath = GMSPolyline()
         flightPath.strokeColor = UIColor.redColor()
+        
+        //IMPORTANT: missionWaypoints should always be initialized after flightPath
+        missionWaypoints = [CLLocationCoordinate2D]()
+        
         self.delegate = delegate
     }
     
@@ -206,7 +227,7 @@ class SurveyMission: NSObject {
         markers.append(newMarker)
         
         if let delegate = delegate {
-            delegate.surveyMissionNewMarkerAdded(markers)
+            delegate.surveyMissionDidAddNewMarker(markers)
         }
     }
     
@@ -214,7 +235,7 @@ class SurveyMission: NSObject {
         polygon.path = polygonPath
         
         if let delegate = delegate {
-            delegate.surveyMissionPolygonUpdated(polygon)
+            delegate.surveyMissionDidUpdatePolygon(polygon)
         }
     }
     
@@ -235,10 +256,11 @@ class SurveyMission: NSObject {
         polygonLines.append(Line(pt1: markers.last!.position, pt2: markers.first!.position))
         
         let containerRect : ContainerRect = ContainerRect.getContainerRect(markerCoordinates)
-        let gridLineLength : Double = containerRect.horizontalDistance
+        //let gridLineLength : Double = containerRect.horizontalDistance
         let gridVerticalDist : Double = containerRect.verticalDistance
         
         // TODO: GET ACTUAL CAMERA PROFILE HERE!
+        //       Then use GridLineLength to calculate picture pts.
         
         let gridLineSpacingInMeters : Double = 50 // = 0.5 * cameraHorizontalFOV
         let numOfGridLines : Int = Int(ceil(gridVerticalDist/gridLineSpacingInMeters))
@@ -258,7 +280,7 @@ class SurveyMission: NSObject {
                 line.displayOnMap(polygon.map!)
                 for anotherLine in polygonLines {
                     if let intersection = line.getIntersectionWith(anotherLine: anotherLine) {
-                        if GMSGeometryContainsLocation(intersection, containerRect.path, true) {
+                        if GMSGeometryContainsLocation(intersection, getSlightlyEnlargedPolygonPath(), true) {
                             intersections[i].append(intersection)
                         }
                     }
@@ -276,7 +298,12 @@ class SurveyMission: NSObject {
             }
         } else {
             flightWaypoints.append(closestPointTo(containerRect.bottomLeftCornerPt, among: markerCoordinates))
-            flightWaypoints.append(GMSGeometryOffset(flightWaypoints[0], 100, 45))
+            flightWaypoints.append(GMSGeometryOffset(flightWaypoints[0], 1000, 45))
+        }
+        
+        //If the region is so small that no intersections were found, take a picture in the center of the polygon
+        if flightWaypoints.isEmpty {
+            flightWaypoints.append(polygonCenter)
         }
         
         // Debug
@@ -302,12 +329,15 @@ class SurveyMission: NSObject {
         return closestPt
     }
     
-    func getSlightlyEnlargePolygonPath() -> GMSMutablePath {
-        /* TODO: IMPLEMENT THIS METHOD and change "containerRect.path" in line
-                if GMSGeometryContainsLocation(intersection, containerRect.path, true)
-            around line 261 to the return value of this func.
-         */
-        return polygonPath
+    func getSlightlyEnlargedPolygonPath() -> GMSMutablePath {
+        let path = GMSMutablePath()
+        if markers.count == 0 {
+            return path
+        }
+        for marker in markers {
+            path.addCoordinate(GMSGeometryOffset(marker.position, 1, GMSGeometryHeading(polygonCenter, marker.position)))
+        }
+        return path
     }
     
     func clear() {
