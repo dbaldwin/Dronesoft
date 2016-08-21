@@ -210,7 +210,10 @@ class SurveyMission: NSObject {
         flightPath = GMSPolyline()
         flightPath.strokeColor = UIColor.redColor()
         
-        //IMPORTANT: missionWaypoints should always be initialized after flightPath
+        /* IMPORTANT: missionWaypoints should always be initialized after flightPath
+         * because setting missionWaypoints automatically updates flightPath.path.
+         * Therefore the app would crash if no flightPath object is instantiated.
+         */
         missionWaypoints = [CLLocationCoordinate2D]()
         
         self.delegate = delegate
@@ -271,13 +274,15 @@ class SurveyMission: NSObject {
         }
         
         /* TODO: SECTION TO BE COMPLETED: DEBUG & IMPROVE FIRST
-            THEN IMPLEMENT .BottomLeft and .BottomRight entries
+         * THEN IMPLEMENT .BottomLeft and .BottomRight entries
+         * AS WELL AS TILTED GRIDLINES
          */
         if entryCorner == .TopLeft || entryCorner == .TopRight {
             for i in 1..<numOfGridLines {
                 let line : Line = Line(pt1: GMSGeometryOffset(containerRect.topLeftCornerPt, Double(i)*gridLineSpacingInMeters, 180), pt2: GMSGeometryOffset(containerRect.topRightCornerPt, Double(i)*gridLineSpacingInMeters, 180))
                 //grid.append(line)
-                line.displayOnMap(polygon.map!)
+                //Debug: Uncomment the following line to display gridlines on map
+                //line.displayOnMap(polygon.map!)
                 for anotherLine in polygonLines {
                     if let intersection = line.getIntersectionWith(anotherLine: anotherLine) {
                         if GMSGeometryContainsLocation(intersection, getSlightlyEnlargedPolygonPath(), true) {
@@ -301,13 +306,13 @@ class SurveyMission: NSObject {
             flightWaypoints.append(GMSGeometryOffset(flightWaypoints[0], 1000, 45))
         }
         
-        //If the region is so small that no intersections were found, take a picture in the center of the polygon
+        //If the region is so small that no intersections were found, take a picture in the center of the polygon - didn't account for the thin strip situation.
         if flightWaypoints.isEmpty {
             flightWaypoints.append(polygonCenter)
         }
         
-        // Debug
-        containerRect.displayOnMap(polygon.map!)
+        // Debug: Uncomment the following line to display container rectangle on map
+        //containerRect.displayOnMap(polygon.map!)
         
         // TODO: SECTION ENDS
         
@@ -342,13 +347,17 @@ class SurveyMission: NSObject {
     
     func clear() {
         markers = [GMSMarker]()
+        missionWaypoints = [CLLocationCoordinate2D]()
     }
     
 }
 
+
+// MARK: - Numeric helper functions
+
 extension CLLocationCoordinate2D {
+    // Might be useful in dealing with doubles' precision problems
     func ceilCoordinateAfterDecimals(decimals: Int) -> CLLocationCoordinate2D {
-        print("\(self), \(self.latitude.ceilAfterDecimals(5))")
         return CLLocationCoordinate2D(latitude: latitude.ceilAfterDecimals(decimals), longitude: longitude.ceilAfterDecimals(decimals))
     }
 }

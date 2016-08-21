@@ -46,12 +46,14 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         
         surveyMission = SurveyMission(delegate: self)
         
-        // Set initial location of the map
-        let camera = GMSCameraPosition.cameraWithLatitude(30.3054, longitude: -98.032, zoom: 16.5)
-        mapView.camera = camera
-        mapView.myLocationEnabled = true
+        // Initialize MapView
         mapView.mapType = kGMSTypeHybrid
         mapView.myLocationEnabled = true
+        if let myLocation = mapView.myLocation {
+            mapView.camera = GMSCameraPosition(target: myLocation.coordinate, zoom: 12, bearing: 0, viewingAngle: 0)
+        } else {
+            mapView.camera = GMSCameraPosition.cameraWithLatitude(30.3054, longitude: -98.032, zoom: 16.5)
+        }
         mapView.settings.myLocationButton = true
         mapView.settings.compassButton = true
         mapView.padding = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 200)
@@ -72,7 +74,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
         // Initialize the aircraft marker
         aircraftMarker.icon = UIImage(named: "Aircraft")
         aircraftMarker.groundAnchor = CGPointMake(0.5, 0.5);
-        aircraftMarker.position = CLLocationCoordinate2D(latitude: 30.305, longitude: -98.032)
+        aircraftMarker.position = mapView.camera.target
         aircraftMarker.map = mapView
         
         // Setting up the mission manager
@@ -136,6 +138,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     @IBAction func clearMap(sender: AnyObject) {
         mapView.clear()
         surveyMission.clear()
+        aircraftMarker.map = mapView
         markerLabel.text = "0"
         acreLabel.text = "0"
         
@@ -177,14 +180,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
     func surveyMissionDidUpdateFlightPath(flightPath: GMSPolyline) {
         flightPath.map = mapView
         
-        /* TODO: Debug why aircraftMarker isn't repositioning correctly after polygon is redrawn.
-        * Note: the coordinate has been verified as correct.
-        * Verifiable by drawing a default marker at the specified location: (flightPath.path?.coordinateAtIndex(0))!.
-        */
-        aircraftMarker.position = (flightPath.path?.coordinateAtIndex(0))!
-        aircraftMarker.map = mapView
-        
         //TODO: Update flightpath related UI items.
+        
     }
     
     // MARK: - DJISDKManagerDelegate
@@ -274,23 +271,28 @@ class ViewController: UIViewController, GMSMapViewDelegate, UITextFieldDelegate,
          *          -> hardcode for now
          */
         
-        let refreshAlert = UIAlertController(title: "Confirm", message: "Are you ready to start the mission?", preferredStyle: UIAlertControllerStyle.Alert)
+        if surveyMission.missionWaypoints.count == 0 {
+            dispatch_async(dispatch_get_main_queue()){
+                let alert = UIAlertController(title: "No mission found!", message: "Plan a new mission by adding markers to create a polygon first.", preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
+                self.presentViewController(alert, animated: true, completion: nil)
+            }
+            return
+        }
         
-        
-        refreshAlert.addAction(UIAlertAction(title: "Yes", style: .Default, handler: { (action: UIAlertAction!) in
+        dispatch_async(dispatch_get_main_queue()){
+            let refreshAlert = UIAlertController(title: "Confirm", message: "Are you ready to start the mission?", preferredStyle: UIAlertControllerStyle.Alert)
             
-            self.uploadAndStartMission()
+            refreshAlert.addAction(UIAlertAction(title: "Yes", style: .Default, handler: { (action: UIAlertAction!) in
+                
+                self.uploadAndStartMission()
+                
+            }))
             
-        }))
-        
-        refreshAlert.addAction(UIAlertAction(title: "No", style: .Cancel, handler: { (action: UIAlertAction!) in
+            refreshAlert.addAction(UIAlertAction(title: "No", style: .Cancel, handler: nil))
             
-            // Do nothing when confirmation is canceled
-            
-        }))
-        
-        presentViewController(refreshAlert, animated: true, completion: nil)
-        
+            self.presentViewController(refreshAlert, animated: true, completion: nil)
+        }
     }
     
     // Build up the waypoint mission and then takeoff

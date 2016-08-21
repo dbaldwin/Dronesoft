@@ -11,26 +11,42 @@ import UIKit
 class CameraProfile: NSObject {
     
     struct FOV {
-        var vertical : Int!
-        var horizontal : Int!
-        var x : Int {
+        var vertical : Float!
+        var horizontal : Float!
+        var x : Float {
             get {
                 return horizontal
             }
         }
-        var y : Int {
+        var y : Float {
             get {
                 return vertical
             }
         }
     }
     
-    var name : String = ""
-    var fieldOfView : FOV!
+    // TODO: GET CORRECT CAMERA PARAMETERS
+    // and determine whether to use drone or camera model for parameter "model".
+    static var Phantom4CameraProfile : CameraProfile {
+        get {
+            //incorrect
+            return CameraProfile(model: "FC330", fieldOfView: FOV(vertical: 30, horizontal: 40))
+        }
+    }
     
+    static var Phantom34KCameraProfile : CameraProfile {
+        get {
+            //incorrect
+            return CameraProfile(model: "FC330", fieldOfView: FOV(vertical: 30, horizontal: 40))
+        }
+    }
     
-    override init() {
-        fieldOfView = FOV(vertical: 20, horizontal: 50)
+    private(set) var model : String = ""
+    private(set) var fieldOfView : FOV!
+    
+    init(model : String, fieldOfView : FOV) {
+        self.model = model
+        self.fieldOfView = fieldOfView
     }
 
 }
